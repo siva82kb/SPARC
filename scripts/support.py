@@ -16,42 +16,42 @@ from smoothness import sparc
 from smoothness import log_dimensionless_jerk as ldlj
 
 
-def dimensionless_jerk2(data, fs, data_type='speed'):
-    """
-    Calculates the smoothness metric for the given movement (position,
-    speed and acceleration) data using the dimensionless jerk.
-    """
-    # first enforce data into an numpy array.
-    data = np.array(data)
+# def dimensionless_jerk2(data, fs, data_type='speed'):
+#     """
+#     Calculates the smoothness metric for the given movement (position,
+#     speed and acceleration) data using the dimensionless jerk.
+#     """
+#     # first enforce data into an numpy array.
+#     data = np.array(data)
 
-    # calculate the scale factor and jerk.
-    data_peak = max(abs(data))
-    dt = 1. / fs
-    data_dur = len(data) * dt
-    if data_type == 'position':
-        jerk = np.diff(data, 3) / pow(dt, 3)
-        scale = 0.284444444444 * pow(data_dur, 5) / pow(data_peak, 2)
-    elif data_type == 'speed':
-        jerk = np.diff(data, 2) / pow(dt, 2)
-        scale = 1.0 * pow(data_dur, 3) / pow(data_peak, 2)
-    elif data_type == 'acceleration':
-        jerk = np.diff(data, 1) / pow(dt, 1)
-        scale = 9.48147733446 * pow(data_dur, 1) / pow(data_peak, 2)
-    else:
-        print ("Error! 'data_type' not recognized. It must be 'position'," +
-               " 'speed' or 'acceleration'")
-        return
+#     # calculate the scale factor and jerk.
+#     data_peak = max(abs(data))
+#     dt = 1. / fs
+#     data_dur = len(data) * dt
+#     if data_type == 'position':
+#         jerk = np.diff(data, 3) / pow(dt, 3)
+#         scale = 0.284444444444 * pow(data_dur, 5) / pow(data_peak, 2)
+#     elif data_type == 'speed':
+#         jerk = np.diff(data, 2) / pow(dt, 2)
+#         scale = 1.0 * pow(data_dur, 3) / pow(data_peak, 2)
+#     elif data_type == 'acceleration':
+#         jerk = np.diff(data, 1) / pow(dt, 1)
+#         scale = 9.48147733446 * pow(data_dur, 1) / pow(data_peak, 2)
+#     else:
+#         print ("Error! 'data_type' not recognized. It must be 'position'," +
+#                " 'speed' or 'acceleration'")
+#         return
 
-    # estimate dj
-    return - scale * sum(pow(jerk, 2)) * dt
+#     # estimate dj
+#     return - scale * sum(pow(jerk, 2)) * dt
 
 
-def log_dimensionless_jerk2(data, fs, data_type='speed'):
-    """
-    Calculates the smoothness metric for the movement data using the log
-    dimensionless jerk metric.
-    """
-    return -np.log(abs(dimensionless_jerk2(data, fs, data_type)))
+# def log_dimensionless_jerk2(data, fs, data_type='speed'):
+#     """
+#     Calculates the smoothness metric for the movement data using the log
+#     dimensionless jerk metric.
+#     """
+#     return -np.log(abs(dimensionless_jerk2(data, fs, data_type)))
 
 
 def round_in(n, precision):
@@ -217,7 +217,7 @@ def generate_noisy_movements(ideal_moves, param):
             _n_move = []
             for k in xrange(param['N_n']):
                 _tmp = (ideal_moves[i] +
-                        (np.sqrt(_var/_snr) *
+                        (np.sqrt(_var / _snr) *
                          np.random.randn(len(ideal_moves[i]))))
                 _n_move.append(_tmp)
             _noisy_move.append(_n_move)
@@ -235,7 +235,7 @@ def filter_parameters(fs):
                    'a': []}
     # Generate Buuterworth filter coefficients
     temp = np.array([[signal.butter(filt_params['N'][i],
-                                    filt_params['fc'][j]/(0.5 * fs))
+                                    filt_params['fc'][j] / (0.5 * fs))
                       for j in xrange(len(filt_params['fc']))]
                      for i in xrange(len(filt_params['N']))])
     filt_params['b'] = temp[:, :, 0]
@@ -251,7 +251,7 @@ def filter_noisy_movements(noisy_moves, param, filt_param):
         [[[[[signal.filtfilt(filt_param['b'][l, m],
                              filt_param['a'][l, m],
                              noisy_moves[i, j, k],
-                             padlen=len(noisy_moves[i, j, k])-10)
+                             padlen=len(noisy_moves[i, j, k]) - 10)
              for m in xrange(len(filt_param['fc']))]
             for l in xrange(len(filt_param['N']))]
            for k in xrange(param['N_n'])]
@@ -265,10 +265,10 @@ def est_smooth_ideal(moves, ts, stype='sparc'):
     sys.stdout.write('.')
     if stype == 'sparc':
         return np.array(
-            [sparc(_m, fs=1/ts, padlevel=4, fc=10., amp_th=0.05)[0]
+            [sparc(_m, fs=1 / ts, padlevel=4, fc=10., amp_th=0.05)[0]
              for _m in moves])
     else:
-        return np.array([ldlj(_m, fs=1/ts) for _m in moves])
+        return np.array([ldlj(_m, fs=1 / ts) for _m in moves])
 
 
 def est_smooth_noisy(moves, ts, param, stype='sparc'):
@@ -277,7 +277,7 @@ def est_smooth_noisy(moves, ts, param, stype='sparc'):
     sys.stdout.write('.')
     if stype == 'sparc':
         return np.array(
-            [[[sparc(moves[i, j, k], fs=1/ts,
+            [[[sparc(moves[i, j, k], fs=1 / ts,
                      padlevel=4, fc=10., amp_th=0.05)[0]
                for k in xrange(param['N_n'])]
               for j in xrange(len(param['snr']))]
@@ -296,7 +296,7 @@ def est_smooth_filt(moves, ts, param, filt_param, stype='sparc'):
     sys.stdout.write('.')
     if stype == 'sparc':
         return np.array(
-            [[[[[sparc(moves[i, j, k, l, m], fs=1/ts,
+            [[[[[sparc(moves[i, j, k, l, m], fs=1 / ts,
                        padlevel=4, fc=10., amp_th=0.05)[0]
                  for m in xrange(len(filt_param['fc']))]
                 for l in xrange(len(filt_param['N']))]
@@ -387,9 +387,9 @@ def add_noise(moves, noise_p, param):
 def filter_movements(moves, fs, param):
     """Filters the noisy movement data.
     """
-    b, a = signal.butter(8.0, 10.0/(0.5 * fs))
+    b, a = signal.butter(8.0, 10.0 / (0.5 * fs))
     return np.array([[signal.filtfilt(b, a, moves[i, j],
-                                      padlen=len(moves[i, j])-10)
+                                      padlen=len(moves[i, j]) - 10)
                       for j in xrange(param['N_m'])]
                      for i, _s in enumerate(param['scales'])])
 
@@ -399,7 +399,7 @@ def estimate_smoothness(moves, ts, param, stype="sparc"):
     """
     if stype == 'sparc':
         return np.array(
-            [[sparc(moves[i, j], fs=1/ts, padlevel=4, fc=10., amp_th=0.05)[0]
+            [[sparc(moves[i, j], fs=1 / ts, padlevel=4, fc=10., amp_th=0.05)[0]
               for j in xrange(param['N_m'])]
              for i in xrange(len(param['scales']))])
     else:
